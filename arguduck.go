@@ -115,7 +115,7 @@ func (a *ArguDuck) Flag(name string, short string, help string, group ...string)
 
 // Float32 defines a new float32 argument.
 // 'name' is the argument's name, 'short' is the abbreviated form, 'defaultValue' specifies the default value, and 'help' describes the argument.
-func (a *ArguDuck) Float32(name string, short string, defaultValue float32, help string, group ...string) (error, ArguDuckErrorString) {
+func (a *ArguDuck) Float(name string, short string, defaultValue float64, help string, group ...string) (error, ArguDuckErrorString) {
 	err, errorString := a.addArgument(name, short, help, defaultValue, a.determineGroup(group))
 
 	if err != nil {
@@ -186,13 +186,13 @@ func (a *ArguDuck) addArgument(name string, short string, help string, defaultVa
 
 	switch v := defaultValue.(type) {
 	case bool:
-		arg = &FlagArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}}
-	case float32:
-		arg = &Float32Argument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}, defaultValue: v}
+		arg = &flagArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}}
+	case float64:
+		arg = &floatArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}, defaultValue: v}
 	case int:
-		arg = &IntArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}, defaultValue: v}
+		arg = &intArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}, defaultValue: v}
 	case string:
-		arg = &StringArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}, defaultValue: v}
+		arg = &stringArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}, defaultValue: v}
 	default:
 		return fmt.Errorf("Unknown type %s", v), UNKNOWN_TYPE
 	}
