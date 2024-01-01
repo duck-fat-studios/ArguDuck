@@ -17,101 +17,101 @@ type arguDuckArgument struct {
 	group string
 }
 
-// StringArgument represents a command-line argument with a string value.
-type StringArgument struct {
+// stringArgument represents a command-line argument with a string value.
+type stringArgument struct {
 	arguDuckArgument
 	defaultValue string
 }
 
 // getName returns the full name of the string argument.
-func (s *StringArgument) getName() string {
+func (s *stringArgument) getName() string {
 	return s.name
 }
 
 // getShort returns the abbreviated name of the string argument.
-func (s *StringArgument) getShort() string {
+func (s *stringArgument) getShort() string {
 	return s.short
 }
 
 // getGroup returns the group name of the string argument.
-func (s *StringArgument) getGroup() string {
+func (s *stringArgument) getGroup() string {
 	return s.group
 }
 
-func (s *StringArgument) getHelp() string {
+func (s *stringArgument) getHelp() string {
 	return s.help
 }
 
-type IntArgument struct {
+type intArgument struct {
 	arguDuckArgument
 	defaultValue int
 }
 
 // getName returns the full name of the int argument.
-func (i *IntArgument) getName() string {
+func (i *intArgument) getName() string {
 	return i.name
 }
 
 // getShort returns the abbreviated name of the int argument.
-func (i *IntArgument) getShort() string {
+func (i *intArgument) getShort() string {
 	return i.short
 }
 
 // getGroup returns the group name of the int argument.
-func (i *IntArgument) getGroup() string {
+func (i *intArgument) getGroup() string {
 	return i.group
 }
 
 // getHelp returns the help text of the int argument.
-func (i *IntArgument) getHelp() string {
+func (i *intArgument) getHelp() string {
 	return i.help
 }
 
-type FlagArgument struct {
+type flagArgument struct {
 	arguDuckArgument
 }
 
 // getName returns the full name of the flag argument.
-func (f *FlagArgument) getName() string {
+func (f *flagArgument) getName() string {
 	return f.name
 }
 
 // getShort returns the abbreviated name of the flag argument.
-func (f *FlagArgument) getShort() string {
+func (f *flagArgument) getShort() string {
 	return f.short
 }
 
 // getGroup returns the group name of the flag argument.
-func (f *FlagArgument) getGroup() string {
+func (f *flagArgument) getGroup() string {
 	return f.group
 }
 
 // getHelp returns the help text of the flag argument.
-func (f *FlagArgument) getHelp() string {
+func (f *flagArgument) getHelp() string {
 	return f.help
 }
 
-type Float32Argument struct {
+type floatArgument struct {
 	arguDuckArgument
-	defaultValue float32
+	defaultValue float64
 }
 
 // getName returns the full name of the float32 argument.
-func (f *Float32Argument) getName() string {
+func (f *floatArgument) getName() string {
 	return f.name
 }
 
 // getShort returns the abbreviated name of the float32 argument.
-func (f *Float32Argument) getShort() string {
+func (f *floatArgument) getShort() string {
 	return f.short
 }
 
 // getGroup returns the group name of the float32 argument.
-func (f *Float32Argument) getGroup() string {
+func (f *floatArgument) getGroup() string {
 	return f.group
 }
 
 // getHelp returns the help text of the float32 argument.
-func (f *Float32Argument) getHelp() string {
+func (f *floatArgument) getHelp() string {
 	return f.help
 }
