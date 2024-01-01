@@ -1,8 +1,5 @@
 package arguduck
 
-// flag represents a boolean flag in command-line arguments.
-type flag bool
-
 // arguDuckArgumentInterface is an interface that all argument types must implement.
 // It provides methods to retrieve argument properties.
 type arguDuckArgumentInterface interface {
