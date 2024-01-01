@@ -11,24 +11,27 @@ import (
 // ArguDuck struct holds all the necessary information for command-line argument parsing.
 // It includes registered arguments, their values, help text, and other parsing state data.
 type ArguDuck struct {
-	helpText        map[string][]string
-	programArgs     []string
+	aboutMessage    string
 	Args            map[string]interface{}
 	arguments       []arguDuckArgumentInterface
-	helpFlagFound   flag
+	helpText        map[string][]string
+	helpFlagFound   bool
+	parsed          bool
+	programArgs     []string
 	shortToFullName map[string]string
-	parsed          flag
 }
 
 // InitArguDuck initializes and returns a new instance of ArguDuck.
 // This function should be used to create an ArguDuck object before adding arguments and parsing.
 func InitArguDuck() *ArguDuck {
 	return &ArguDuck{
-		programArgs:     nil,
+		aboutMessage:    "",
 		Args:            make(map[string]interface{}),
 		helpText:        make(map[string][]string),
+		helpFlagFound:   false,
 		shortToFullName: make(map[string]string),
 		parsed:          false,
+		programArgs:     nil,
 	}
 }
 
@@ -42,14 +45,19 @@ func (a *ArguDuck) Parse() {
 
 	a.programArgs = os.Args[1:]
 
-	a.Flag("help", "h", "Displays this help text")
+	// If a help parameter doesnt exists we'll make it.
+	_, ok := a.getFullNameFromShort("h")
 
-	    for _, arg := range a.programArgs {
-        if arg == "--help" || arg == "-h" {
-            a.helpFlagFound = true
-            break
-        }
-    }
+	if ok {
+		a.Flag("help", "h", "Displays this help text")
+	}
+
+	for _, arg := range a.programArgs {
+		if arg == "--help" || arg == "-h" {
+			a.helpFlagFound = true
+			break
+		}
+	}
 
 	if a.helpFlagFound {
 		a.printHelpText()
@@ -93,59 +101,112 @@ func (a *ArguDuck) Parse() {
 	a.parsed = true
 }
 
-
-
 // Flag defines a new boolean flag argument.
 // 'name' is the full name of the flag, 'short' is the abbreviated form, and 'help' describes the flag's purpose.
+func (a *ArguDuck) Flag(name string, short string, help string, group ...string) (error, ArguDuckErrorString) {
+	err, errorString := a.addArgument(name, short, help, false, a.determineGroup(group))
 
-func (a *ArguDuck) Flag(name string, short string, help string, group ...string) {
-	a.addArgument(name, short, help, false, group[0])
+	if err != nil {
+		return err, errorString
+	}
+
+	return nil, OK
 }
 
 // Float32 defines a new float32 argument.
 // 'name' is the argument's name, 'short' is the abbreviated form, 'defaultValue' specifies the default value, and 'help' describes the argument.
-func (a *ArguDuck) Float32(name string, short string, defaultValue float32, help string, group ...string) {
-	a.addArgument(name, short, help, defaultValue, group[0])
+func (a *ArguDuck) Float32(name string, short string, defaultValue float32, help string, group ...string) (error, ArguDuckErrorString) {
+	err, errorString := a.addArgument(name, short, help, defaultValue, a.determineGroup(group))
+
+	if err != nil {
+		return err, errorString
+	}
+
+	return nil, OK
 }
 
 // Int defines a new integer argument.
 // Similar to Float32, it allows the specification of a name, short form, default value, and help description.
 
-func (a *ArguDuck) Int(name string, short string, defaultValue int, help string, group ...string) {
-	a.addArgument(name, short, help, defaultValue, group[0])
+func (a *ArguDuck) Int(name string, short string, defaultValue int, help string, group ...string) (error, ArguDuckErrorString) {
+	err, errorString := a.addArgument(name, short, help, defaultValue, a.determineGroup(group))
+	
+	if err != nil {
+		return err, errorString
+	}
+
+	return nil, OK
 }
 
 // String defines a new string argument.
 // This method is used for arguments that are expected to be strings, with similar parameters as in Int and Float32.
-func (a *ArguDuck) String(name string, short string, defaultValue string, help string, group ...string) {
-	a.addArgument(name, short, help, defaultValue, group[0])
+func (a *ArguDuck) String(name string, short string, defaultValue string, help string, group ...string) (error, ArguDuckErrorString) {
+	err, errorString := a.addArgument(name, short, help, defaultValue, a.determineGroup(group))
+	
+	if err != nil {
+		return err, errorString
+	}
+
+	return nil, OK
+}
+
+func (a *ArguDuck) determineGroup(group []string) string {
+	if len(group) > 0 {
+		return group[0]
+	}
+	return "Usage"
+}
+
+func (a *ArguDuck) GetAbout() string {
+	return a.aboutMessage
+}
+
+func (a *ArguDuck) SetAbout(message string) {
+	a.aboutMessage = message
 }
 
 // addArgument is an internal method that adds a new argument to the ArguDuck instance.
 // It is called by the public methods like String, Int, Float32, and Flag.
-func (a *ArguDuck) addArgument(name string, short string, help string, defaultValue interface{}, group string) {
+func (a *ArguDuck) addArgument(name string, short string, help string, defaultValue interface{}, group ...string) (error, ArguDuckErrorString) {
 	var arg arguDuckArgumentInterface
+	var groupName string
+
+	if _, ok := a.Args[name]; ok {
+		return fmt.Errorf("Argument %s already exists", name), ARG_IN_USE
+	}
+
+	if _, ok := a.shortToFullName[short]; ok {
+		shrt, _ := a.getFullNameFromShort(short)
+		return fmt.Errorf("Short %s already in use in %s", short, shrt), SHORT_IN_USE
+	}
+
+	if group != nil {
+		groupName = group[0]
+	}
 
 	switch v := defaultValue.(type) {
-	case flag: 
-		arg = &FlagArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: group}}
+	case bool:
+		arg = &FlagArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}}
 	case float32:
-		arg = &Float32Argument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: group}, defaultValue: v}
+		arg = &Float32Argument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}, defaultValue: v}
 	case int:
-		arg = &IntArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: group}, defaultValue: v}
+		arg = &IntArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}, defaultValue: v}
 	case string:
-		arg = &StringArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: group}, defaultValue: v}
+		arg = &StringArgument{arguDuckArgument: arguDuckArgument{name: name, short: short, help: help, group: groupName}, defaultValue: v}
 	default:
-		fmt.Errorf("Unsupported argument type for argument %v with value %v\n", name, v)
+		return fmt.Errorf("Unknown type %s", v), UNKNOWN_TYPE
 	}
 
 	a.Args[name] = defaultValue
 	a.arguments = append(a.arguments, arg)
+
 	a.shortToFullName[arg.getShort()] = arg.getName()
 
-	if group != "" {
-		a.addHelpText(group, arg)
+	if groupName != "" {
+		a.addHelpText(groupName, arg)
 	}
+
+	return nil, OK
 }
 
 // getFullNameFromShort is an internal method that retrieves the full argument name from its short form.
@@ -169,15 +230,19 @@ func (a *ArguDuck) addHelpText(groupName string, argument arguDuckArgumentInterf
 // It is typically called when the help flag is provided in the command line.
 func (a *ArguDuck) printHelpText() {
 
-	// Print the basic ussage first
-	fmt.Println("Ussage")
-	for _, help := range a.helpText["Ussage"] {
+	if a.GetAbout() != "" {
+		fmt.Printf("%s\n\n", a.GetAbout())
+	}
+
+	// Print the basic usage first
+	fmt.Println("Usage")
+	for _, help := range a.helpText["Usage"] {
 		fmt.Println(help)
 	}
 	fmt.Println("")
 
 	for group, helptext := range a.helpText {
-		if group != "Ussage" {
+		if group != "Usage" {
 
 			fmt.Println(group)
 			for _, help := range helptext {
@@ -206,8 +271,6 @@ func (a *ArguDuck) setHelpText(argInterface arguDuckArgumentInterface) string {
 // This method is called internally during parsing.
 func (a *ArguDuck) setArgValue(argName string, argIndex int) error {
 	argValue := a.Args[argName]
-
-	fmt.Printf("ArgName: %v\n", argName)
 
 	switch argValue.(type) {
 	case string:
